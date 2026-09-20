@@ -72,17 +72,17 @@ button{font:inherit}
       <button class="style-card" data-style="cartoon">
         <canvas id="thumbCartoon"></canvas>
         <div class="style-name">🎨 RECEIPT CARTOON</div>
-        <p class="style-note">Gaya kartun hitam putih.</p>
+        <p class="style-note">Kartun ink hitam putih.</p>
       </button>
       <button class="style-card" data-style="line">
         <canvas id="thumbLine"></canvas>
         <div class="style-name">✏️ LINE ART</div>
-        <p class="style-note">Garisan sahaja — boleh colour.</p>
+        <p class="style-note">Outline bersih — boleh colour.</p>
       </button>
       <button class="style-card" data-style="retro">
         <canvas id="thumbRetro"></canvas>
         <div class="style-name">🖤 RETRO B&W</div>
-        <p class="style-note">Gaya thermal klasik.</p>
+        <p class="style-note">Hitam putih thermal.</p>
       </button>
     </div>
     <div class="actions">
@@ -153,40 +153,130 @@ async function takePhoto(){
 }
 function imageToCanvas(src, effect){
   const c=document.createElement('canvas');
-  const max=1000;
+  const max=1100;
   const scale=Math.min(1,max/src.width);
-  c.width=Math.round(src.width*scale); c.height=Math.round(src.height*scale);
-  const x=c.getContext('2d'); x.drawImage(src,0,0,c.width,c.height);
-  const img=x.getImageData(0,0,c.width,c.height), d=img.data;
-  for(let i=0;i<d.length;i+=4){
-    const r=d[i],g=d[i+1],b=d[i+2];
-    const lum=.299*r+.587*g+.114*b;
-    if(effect==='retro'){
-      const q=lum<80?0:lum<155?105:255;
-      d[i]=d[i+1]=d[i+2]=q;
-    }else if(effect==='line'){
-      const q=lum>165?255:lum<85?0:135;
-      d[i]=d[i+1]=d[i+2]=q;
-    }else{
-      // Local free cartoon approximation: posterized monochrome + high contrast.
-      const q=lum<65?0:lum<120?55:lum<180?170:255;
-      d[i]=d[i+1]=d[i+2]=q;
+  c.width=Math.round(src.width*scale);
+  c.height=Math.round(src.height*scale);
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(src,0,0,c.width,c.height);
+
+  const W=c.width,H=c.height;
+  const base=ctx.getImageData(0,0,W,H);
+  const d=base.data;
+  const gray=new Float32Array(W*H);
+
+  // Luminance
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const p=(y*W+x)*4;
+      gray[y*W+x]=0.299*d[p]+0.587*d[p+1]+0.114*d[p+2];
     }
   }
-  x.putImageData(img,0,0);
+
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+  // Small Gaussian-like blur, used only for cleaner edges.
+  const blur=new Float32Array(W*H);
+  for(let y=1;y<H-1;y++){
+    for(let x=1;x<W-1;x++){
+      const i=y*W+x;
+      blur[i]=(
+        gray[i-W-1]+2*gray[i-W]+gray[i-W+1]+
+        2*gray[i-1]+4*gray[i]+2*gray[i+1]+
+        gray[i+W-1]+2*gray[i+W]+gray[i+W+1]
+      )/16;
+    }
+  }
+
+  // Sobel edge strength.
+  const edge=new Float32Array(W*H);
+  for(let y=1;y<H-1;y++){
+    for(let x=1;x<W-1;x++){
+      const i=y*W+x;
+      const gx=
+        -blur[i-W-1]-2*blur[i-1]-blur[i+W-1]+
+         blur[i-W+1]+2*blur[i+1]+blur[i+W+1];
+      const gy=
+        -blur[i-W-1]-2*blur[i-W]-blur[i-W+1]+
+         blur[i+W-1]+2*blur[i+W]+blur[i+W+1];
+      edge[i]=Math.sqrt(gx*gx+gy*gy);
+    }
+  }
+
+  const out=ctx.createImageData(W,H);
+  const o=out.data;
+
   if(effect==='line'){
-    // Sobel-like edge emphasis using neighboring pixels.
-    const src=x.getImageData(0,0,c.width,c.height), a=src.data, out=x.createImageData(c.width,c.height), o=out.data;
-    for(let y=1;y<c.height-1;y++) for(let xx=1;xx<c.width-1;xx++){
-      const p=(y*c.width+xx)*4;
-      const l=(y*c.width+xx-1)*4, r=(y*c.width+xx+1)*4;
-      const u=((y-1)*c.width+xx)*4, dn=((y+1)*c.width+xx)*4;
-      const gx=Math.abs(a[r]-a[l]), gy=Math.abs(a[dn]-a[u]), edge=gx+gy;
-      const v=edge>85?0:255;
+    // Clean colouring-page style:
+    // mostly white, with thin black outlines and selected interior detail.
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        const i=y*W+x,p=i*4;
+        const g=gray[i];
+        const e=edge[i];
+
+        // Strong edges + darker structural details.
+        let line = e > 52;
+        if(!line && g < 72 && e > 24) line=true;
+
+        // Suppress tiny/noisy marks.
+        if(e < 32) line=false;
+
+        const v=line?0:255;
+        o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
+      }
+    }
+    // Slightly close broken outlines by adding nearby strong edges.
+    for(let y=1;y<H-1;y++){
+      for(let x=1;x<W-1;x++){
+        const i=(y*W+x)*4;
+        if(o[i]===0) continue;
+        let black=0;
+        for(let yy=-1;yy<=1;yy++) for(let xx=-1;xx<=1;xx++){
+          if(o[((y+yy)*W+(x+xx))*4]===0) black++;
+        }
+        if(black>=4){o[i]=o[i+1]=o[i+2]=0;}
+      }
+    }
+    ctx.putImageData(out,0,0);
+    return c;
+  }
+
+  if(effect==='retro'){
+    // Thermal-friendly black/white with gentle dithering instead of huge flat blocks.
+    const matrix=[[0,128],[192,64]];
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        const i=y*W+x,p=i*4;
+        const threshold=128 + matrix[y&1][x&1]-128;
+        const v=gray[i]<threshold?0:255;
+        o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
+      }
+    }
+    ctx.putImageData(out,0,0);
+    return c;
+  }
+
+  // RECEIPT CARTOON:
+  // local, free "ink cartoon": posterized tones + crisp dark outlines.
+  // This is intentionally stronger than the previous version, but it is
+  // still not a cloud AI redraw.
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const i=y*W+x,p=i*4;
+      const g=gray[i], e=edge[i];
+      let v;
+      if(e>58) v=0;
+      else if(g<55) v=12;
+      else if(g<105) v=58;
+      else if(g<165) v=150;
+      else v=245;
+      // Keep very light areas almost white for thermal paper.
+      if(g>215 && e<45) v=255;
       o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
     }
-    x.putImageData(out,0,0);
   }
+  ctx.putImageData(out,0,0);
   return c;
 }
 function loadImage(data){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=data})}
