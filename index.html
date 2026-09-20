@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Kota Snap</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#111;color:#fff;font-family:Arial,sans-serif}
+body{overflow:hidden}.app{height:100%;display:flex;flex-direction:column}
+header{padding:18px 20px;text-align:center;font-weight:800;letter-spacing:3px;font-size:24px}
+.camera{position:relative;flex:1;min-height:0;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+video{width:100%;height:100%;object-fit:cover}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.count{font-size:110px;font-weight:900;text-shadow:0 3px 15px #000}
+.controls{padding:18px 20px calc(18px + env(safe-area-inset-bottom));background:#111}
+button{border:0;border-radius:999px;padding:16px 28px;font-size:18px;font-weight:800;background:#fff;color:#111;min-height:52px}
+.row{display:flex;gap:14px;align-items:center;justify-content:center}.secondary{background:#333;color:#fff}
+.status{text-align:center;color:#aaa;font-size:13px;margin-top:10px;min-height:18px}
+#preview{display:none;position:absolute;inset:0;background:#111;z-index:5;flex-direction:column}
+#preview img{flex:1;width:100%;height:100%;object-fit:contain;min-height:0}
+.previewControls{padding:16px 20px calc(16px + env(safe-area-inset-bottom));background:#111}
+</style>
+</head>
+<body>
+<div class="app">
+<header>KOTA SNAP</header>
+<main class="camera">
+  <video id="video" autoplay playsinline muted></video>
+  <div class="overlay"><div id="count" class="count"></div></div>
+</main>
+<div class="controls">
+  <div class="row">
+    <button id="start">MULA</button>
+    <button id="flip" class="secondary" type="button">↔ KAMERA</button>
+  </div>
+  <div id="status" class="status">Tekan MULA untuk mulakan kamera.</div>
+</div>
+</div>
+
+<section id="preview">
+  <img id="photo" alt="Foto Kota Snap">
+  <div class="previewControls">
+    <div class="row">
+      <button id="retake" class="secondary" type="button">ULANG</button>
+      <button id="use" type="button">GUNA FOTO</button>
+    </div>
+    <div id="previewStatus" class="status">Preview</div>
+  </div>
+</section>
+
+<script>
+const video=document.getElementById('video'), start=document.getElementById('start');
+const flip=document.getElementById('flip'), count=document.getElementById('count');
+const status=document.getElementById('status'), preview=document.getElementById('preview');
+const photo=document.getElementById('photo'), retake=document.getElementById('retake'), use=document.getElementById('use');
+let stream=null, facing='user', busy=false;
+
+async function openCamera(){
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+  if(!navigator.mediaDevices?.getUserMedia){
+    status.textContent='Kamera memerlukan Safari melalui HTTPS.';
+    return false;
+  }
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
+    video.srcObject=stream;
+    await video.play();
+    status.textContent='Kamera aktif.';
+    return true;
+  }catch(e){
+    status.textContent='Tak dapat akses kamera. Tekan Allow Camera dalam Safari.';
+    return false;
+  }
+}
+async function countdown(){
+  if(busy)return; busy=true;
+  if(!stream && !(await openCamera())){busy=false;return;}
+  for(let n=3;n>=1;n--){
+    count.textContent=n;
+    await new Promise(r=>setTimeout(r,700));
+  }
+  count.textContent='📸';
+  await new Promise(r=>setTimeout(r,300));
+  const c=document.createElement('canvas');
+  c.width=video.videoWidth;c.height=video.videoHeight;
+  c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+  photo.src=c.toDataURL('image/jpeg',.92);
+  preview.style.display='flex';
+  count.textContent='';
+  busy=false;
+}
+start.onclick=countdown;
+flip.onclick=async()=>{if(busy)return;facing=facing==='user'?'environment':'user';await openCamera()};
+retake.onclick=()=>{preview.style.display='none';status.textContent='Tekan MULA untuk ambil semula.'};
+use.onclick=()=>{document.getElementById('previewStatus').textContent='Foto diterima — template Kota Snap akan disambungkan seterusnya.'};
+
+openCamera();
+</script>
+</body>
+</html>
