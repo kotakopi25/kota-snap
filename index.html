@@ -88,7 +88,7 @@ button{font:inherit}
     <div class="actions">
       <button class="secondary" id="backPreviewBtn">KEMBALI</button>
     </div>
-    <div class="small">Semua pemprosesan dalam versi ini dibuat terus pada iPad. Tiada API berbayar digunakan.</div>
+    <div class="small">Filter dibuat terus dalam iPad • 100% local • tiada API / bayaran.</div>
   </section>
 
   <section id="final" class="screen final-screen">
@@ -153,89 +153,95 @@ async function takePhoto(){
 }
 function imageToCanvas(src, effect){
   const c=document.createElement('canvas');
-  const max=1100;
+  const max=1200;
   const scale=Math.min(1,max/src.width);
-  c.width=Math.round(src.width*scale);
-  c.height=Math.round(src.height*scale);
+  c.width=Math.max(1,Math.round(src.width*scale));
+  c.height=Math.max(1,Math.round(src.height*scale));
   const ctx=c.getContext('2d',{willReadFrequently:true});
   ctx.drawImage(src,0,0,c.width,c.height);
 
-  const W=c.width,H=c.height;
-  const base=ctx.getImageData(0,0,W,H);
-  const d=base.data;
-  const gray=new Float32Array(W*H);
+  const W=c.width,H=c.height,N=W*H;
+  const original=ctx.getImageData(0,0,W,H);
+  const d=original.data;
+  const gray=new Float32Array(N);
 
-  // Luminance
-  for(let y=0;y<H;y++){
-    for(let x=0;x<W;x++){
-      const p=(y*W+x)*4;
-      gray[y*W+x]=0.299*d[p]+0.587*d[p+1]+0.114*d[p+2];
+  for(let i=0,p=0;i<N;i++,p+=4)
+    gray[i]=0.299*d[p]+0.587*d[p+1]+0.114*d[p+2];
+
+  // Edge-preserving-ish smoothing: repeated 3x3 weighted blur.
+  function smooth(input){
+    const out=new Float32Array(N);
+    for(let y=0;y<H;y++){
+      for(let x=0;x<W;x++){
+        let sum=0,ws=0, center=input[y*W+x];
+        for(let yy=-1;yy<=1;yy++){
+          const cy=Math.max(0,Math.min(H-1,y+yy));
+          for(let xx=-1;xx<=1;xx++){
+            const cx=Math.max(0,Math.min(W-1,x+xx));
+            const v=input[cy*W+cx];
+            const dist=Math.abs(v-center);
+            const w=dist<18 ? 1.8 : dist<35 ? .65 : .18;
+            sum+=v*w; ws+=w;
+          }
+        }
+        out[y*W+x]=sum/ws;
+      }
     }
+    return out;
   }
 
-  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  const soft=smooth(smooth(gray));
 
-  // Small Gaussian-like blur, used only for cleaner edges.
-  const blur=new Float32Array(W*H);
+  // Sobel gradient.
+  const mag=new Float32Array(N);
   for(let y=1;y<H-1;y++){
     for(let x=1;x<W-1;x++){
       const i=y*W+x;
-      blur[i]=(
-        gray[i-W-1]+2*gray[i-W]+gray[i-W+1]+
-        2*gray[i-1]+4*gray[i]+2*gray[i+1]+
-        gray[i+W-1]+2*gray[i+W]+gray[i+W+1]
-      )/16;
+      const a=soft[i-W-1],b=soft[i-W],cc=soft[i-W+1];
+      const e=soft[i-1],g=soft[i+1];
+      const h=soft[i+W-1],j=soft[i+W],k=soft[i+W+1];
+      const gx=-a-2*e-h+cc+2*g+k;
+      const gy=-a-2*b-cc+h+2*j+k;
+      mag[i]=Math.sqrt(gx*gx+gy*gy);
     }
   }
 
-  // Sobel edge strength.
-  const edge=new Float32Array(W*H);
-  for(let y=1;y<H-1;y++){
-    for(let x=1;x<W-1;x++){
-      const i=y*W+x;
-      const gx=
-        -blur[i-W-1]-2*blur[i-1]-blur[i+W-1]+
-         blur[i-W+1]+2*blur[i+1]+blur[i+W+1];
-      const gy=
-        -blur[i-W-1]-2*blur[i-W]-blur[i-W+1]+
-         blur[i+W-1]+2*blur[i+W]+blur[i+W+1];
-      edge[i]=Math.sqrt(gx*gx+gy*gy);
-    }
-  }
+  // Robust percentile thresholds.
+  let samples=[];
+  for(let i=0;i<N;i+=Math.max(1,Math.floor(N/5000))) samples.push(mag[i]);
+  samples.sort((a,b)=>a-b);
+  const pct=q=>samples[Math.floor((samples.length-1)*q)]||0;
+  const strong=Math.max(30,pct(.82));
+  const weak=Math.max(16,strong*.48);
 
-  const out=ctx.createImageData(W,H);
-  const o=out.data;
+  const out=ctx.createImageData(W,H), o=out.data;
 
   if(effect==='line'){
-    // Clean colouring-page style:
-    // mostly white, with thin black outlines and selected interior detail.
+    // Clean colouring-page look: white paper + selective ink lines.
+    // Keep mid-tone facial/clothing contours without filling large areas.
     for(let y=0;y<H;y++){
       for(let x=0;x<W;x++){
         const i=y*W+x,p=i*4;
-        const g=gray[i];
-        const e=edge[i];
-
-        // Strong edges + darker structural details.
-        let line = e > 52;
-        if(!line && g < 72 && e > 24) line=true;
-
-        // Suppress tiny/noisy marks.
-        if(e < 32) line=false;
-
-        const v=line?0:255;
+        let isEdge=mag[i]>strong;
+        if(!isEdge && mag[i]>weak){
+          // Keep dark structural contours; reject flat dark regions.
+          const g=soft[i];
+          isEdge = g<125 && mag[i]>weak*1.22;
+        }
+        const v=isEdge?18:252;
         o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
       }
     }
-    // Slightly close broken outlines by adding nearby strong edges.
+    // One-pixel cleanup: remove isolated black specks.
     for(let y=1;y<H-1;y++){
       for(let x=1;x<W-1;x++){
-        const i=(y*W+x)*4;
-        if(o[i]===0) continue;
-        let black=0;
-        for(let yy=-1;yy<=1;yy++) for(let xx=-1;xx<=1;xx++){
-          if(o[((y+yy)*W+(x+xx))*4]===0) black++;
+        const p=(y*W+x)*4;
+        if(o[p]<100){
+          let n=0;
+          for(let yy=-1;yy<=1;yy++) for(let xx=-1;xx<=1;xx++)
+            if(o[((y+yy)*W+(x+xx))*4]<100)n++;
+          if(n<=2)o[p]=o[p+1]=o[p+2]=252;
         }
-        if(black>=4){o[i]=o[i+1]=o[i+2]=0;}
       }
     }
     ctx.putImageData(out,0,0);
@@ -243,38 +249,36 @@ function imageToCanvas(src, effect){
   }
 
   if(effect==='retro'){
-    // Thermal-friendly black/white with gentle dithering instead of huge flat blocks.
-    const matrix=[[0,128],[192,64]];
-    for(let y=0;y<H;y++){
-      for(let x=0;x<W;x++){
-        const i=y*W+x,p=i*4;
-        const threshold=128 + matrix[y&1][x&1]-128;
-        const v=gray[i]<threshold?0:255;
-        o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
-      }
+    // Classic receipt look: grayscale + ordered dithering.
+    const mat=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+      const i=y*W+x,p=i*4;
+      let g=soft[i];
+      // Slight contrast boost.
+      g=Math.max(0,Math.min(255,(g-128)*1.22+128));
+      const threshold=mat[y&3][x&3]*16;
+      const v=g>threshold?255:0;
+      o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
     }
     ctx.putImageData(out,0,0);
     return c;
   }
 
-  // RECEIPT CARTOON:
-  // local, free "ink cartoon": posterized tones + crisp dark outlines.
-  // This is intentionally stronger than the previous version, but it is
-  // still not a cloud AI redraw.
-  for(let y=0;y<H;y++){
-    for(let x=0;x<W;x++){
-      const i=y*W+x,p=i*4;
-      const g=gray[i], e=edge[i];
-      let v;
-      if(e>58) v=0;
-      else if(g<55) v=12;
-      else if(g<105) v=58;
-      else if(g<165) v=150;
-      else v=245;
-      // Keep very light areas almost white for thermal paper.
-      if(g>215 && e<45) v=255;
-      o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
-    }
+  // RECEIPT CARTOON: posterized ink illustration.
+  // Smooth first, then simplify tones and add clean outlines.
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const i=y*W+x,p=i*4;
+    let g=soft[i];
+    // contrast
+    g=Math.max(0,Math.min(255,(g-128)*1.18+128));
+    let v;
+    if(mag[i]>strong*1.05) v=10;
+    else if(g<70) v=28;
+    else if(g<115) v=82;
+    else if(g<175) v=170;
+    else v=248;
+    if(g>225 && mag[i]<weak) v=255;
+    o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
   }
   ctx.putImageData(out,0,0);
   return c;
