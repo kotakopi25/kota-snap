@@ -3,295 +3,244 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#0b0b0b">
 <title>Kota Snap</title>
 <style>
+:root{--bg:#090909;--card:#151515;--line:#2b2b2b;--text:#fff;--muted:#aaa;--accent:#fff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080808;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-body{touch-action:manipulation}
-.screen{position:fixed;inset:0;display:none;overflow:hidden;background:#080808}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+button{font:inherit}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.screen{display:none;flex:1;min-height:0;overflow:hidden}
 .screen.active{display:flex}
-.center{align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:28px}
-.brand{font-size:clamp(34px,7vw,70px);font-weight:900;letter-spacing:4px}
-.subbrand{font-size:clamp(18px,3.5vw,30px);font-weight:800;letter-spacing:2px;margin-top:5px}
-.tag{margin-top:18px;color:#aaa;font-size:clamp(13px,2vw,19px);letter-spacing:1px}
-.btn{border:1px solid #555;background:#252525;color:#fff;border-radius:999px;padding:18px 34px;font-size:clamp(17px,3vw,26px);font-weight:800;min-width:210px;margin-top:28px}
-.btn.primary{background:#fff;color:#111;border-color:#fff}
-.btn:active{transform:scale(.98)}
-.small{font-size:13px;color:#888;margin-top:14px}
-
-#cameraScreen{background:#000;align-items:center;justify-content:center}
-#video{width:100%;height:100%;object-fit:cover;display:block;transform:none}
-.camShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.25),transparent 25%,transparent 72%,rgba(0,0,0,.4))}
-.camTop{position:absolute;top:0;left:0;right:0;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:16px}
-.camBottom{position:absolute;bottom:0;left:0;right:0;padding:24px 22px 32px;display:flex;justify-content:center}
-.countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:clamp(90px,22vw,220px);font-weight:900;text-shadow:0 5px 30px #000}
-.countdown.show{display:flex}
-
-.previewWrap{width:min(90vw,760px);height:min(72vh,760px);display:flex;align-items:center;justify-content:center}
-#photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:18px;background:#111;box-shadow:0 15px 50px #000}
-.actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
-.actions .btn{margin-top:18px}
-
-.filterGrid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:14px;width:min(92vw,900px)}
-.filterCard{background:#161616;border:2px solid #333;border-radius:18px;padding:10px;cursor:pointer}
-.filterCard.selected{border-color:#fff}
-.filterCard img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;display:block}
-.filterName{font-weight:800;margin-top:9px;font-size:15px}
-@media(max-width:650px){.filterGrid{grid-template-columns:repeat(2,1fr)}}
-
-.finalLayout{width:min(94vw,900px);height:min(78vh,820px);display:flex;align-items:center;justify-content:center}
-#finalCanvas{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;box-shadow:0 12px 50px #000;background:#fff}
-.note{color:#999;font-size:13px;margin-top:10px}
-
-#status{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);color:#777;font-size:11px;z-index:20;pointer-events:none}
-.hidden{display:none!important}
+.center{align-items:center;justify-content:center;flex-direction:column;padding:24px}
+.brand{font-size:clamp(34px,7vw,62px);font-weight:900;letter-spacing:4px}
+.sub{margin-top:8px;color:var(--muted);letter-spacing:3px;font-size:12px}
+.primary{margin-top:36px;border:0;border-radius:18px;background:#fff;color:#000;padding:18px 44px;font-size:18px;font-weight:900;letter-spacing:1px}
+.secondary{border:1px solid #555;background:#181818;color:#fff;border-radius:14px;padding:14px 22px;font-weight:800}
+.camera-screen{position:relative;flex-direction:column}
+#video{width:100%;height:100%;object-fit:cover;display:block;transform:none;background:#000}
+.cam-top{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;padding:18px 20px;background:linear-gradient(#000b,transparent);z-index:2}
+.pill{background:#0009;border:1px solid #ffffff33;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:800}
+.capture-btn{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:82px;height:82px;border-radius:50%;border:7px solid #fff;background:#111;box-shadow:0 0 0 5px #0008;z-index:3}
+.countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0004;z-index:5;font-size:min(25vw,180px);font-weight:1000;text-shadow:0 4px 20px #000}
+.preview-screen,.style-screen,.final-screen{flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:12px}
+.preview-wrap{height:min(67vh,620px);max-width:92vw;aspect-ratio:3/4;background:#111;border:1px solid #333;border-radius:18px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#previewImg{max-width:100%;max-height:100%;display:block;object-fit:contain}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.title{font-size:22px;font-weight:900;letter-spacing:1px}
+.style-grid{width:min(920px,94vw);display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.style-card{border:1px solid #333;background:var(--card);border-radius:16px;padding:10px;text-align:left;color:#fff}
+.style-card.selected{border:2px solid #fff}
+.style-card canvas{width:100%;aspect-ratio:3/4;background:#fff;border-radius:10px;display:block}
+.style-name{font-weight:900;margin:9px 2px 3px}
+.style-note{font-size:11px;color:#999;margin:0 2px}
+#finalCanvas{height:min(76vh,760px);max-width:92vw;object-fit:contain;background:#fff;border-radius:12px}
+.small{font-size:11px;color:#999;text-align:center;max-width:680px}
+.notice{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111;border:1px solid #333;padding:9px 14px;border-radius:999px;font-size:11px;color:#bbb;z-index:20;display:none}
+@media(max-width:700px){.style-grid{gap:7px}.style-card{padding:7px}.style-name{font-size:13px}.style-note{font-size:9px}.preview-wrap{height:61vh}}
 </style>
 </head>
 <body>
+<div class="app">
+  <section id="home" class="screen active center">
+    <div class="brand">KOTA SNAP</div>
+    <div class="sub">KOTA KOPI • PHOTOBOOTH</div>
+    <button class="primary" id="startBtn">MULA SESI</button>
+  </section>
 
-<section id="home" class="screen active center">
-  <div class="brand">KOTA KOPI</div>
-  <div class="subbrand">KOTA SNAP</div>
-  <div class="tag">GOOD COFFEE · GOOD PEOPLE · GOOD DAYS</div>
-  <button id="startBtn" class="btn primary">MULA SESI</button>
-  <div class="small">1 foto · pilih filter · preview · siap untuk cetak</div>
-</section>
+  <section id="camera" class="screen camera-screen">
+    <div class="cam-top">
+      <div class="pill">KOTA SNAP</div><div class="pill">1 FOTO</div>
+    </div>
+    <video id="video" autoplay playsinline muted></video>
+    <div id="countdown" class="countdown"></div>
+    <button id="captureBtn" class="capture-btn" aria-label="Ambil gambar"></button>
+  </section>
 
-<section id="cameraScreen" class="screen">
-  <video id="video" autoplay playsinline muted></video>
-  <div class="camShade"></div>
-  <div class="camTop"><span>KOTA SNAP</span><span>1 FOTO</span></div>
-  <div id="countdown" class="countdown"></div>
-  <div class="camBottom"><button id="snapBtn" class="btn primary">AMBIL FOTO</button></div>
-</section>
+  <section id="preview" class="screen preview-screen">
+    <div class="title">SEMAK FOTO</div>
+    <div class="preview-wrap"><img id="previewImg" alt="Pratonton"></div>
+    <div class="actions">
+      <button class="secondary" id="retakeBtn">RETAKE</button>
+      <button class="primary" style="margin:0" id="useBtn">GUNA FOTO</button>
+    </div>
+  </section>
 
-<section id="previewScreen" class="screen center">
-  <div class="brand" style="font-size:clamp(24px,5vw,44px)">PREVIEW</div>
-  <div class="previewWrap"><img id="photoPreview" alt="Preview foto"></div>
-  <div class="actions">
-    <button id="retakeBtn" class="btn">↻ AMBIL SEMULA</button>
-    <button id="useBtn" class="btn primary">GUNA FOTO</button>
-  </div>
-</section>
+  <section id="styles" class="screen style-screen">
+    <div class="title">PILIH STYLE</div>
+    <div class="style-grid">
+      <button class="style-card" data-style="cartoon">
+        <canvas id="thumbCartoon"></canvas>
+        <div class="style-name">🎨 RECEIPT CARTOON</div>
+        <p class="style-note">Gaya kartun hitam putih.</p>
+      </button>
+      <button class="style-card" data-style="line">
+        <canvas id="thumbLine"></canvas>
+        <div class="style-name">✏️ LINE ART</div>
+        <p class="style-note">Garisan sahaja — boleh colour.</p>
+      </button>
+      <button class="style-card" data-style="retro">
+        <canvas id="thumbRetro"></canvas>
+        <div class="style-name">🖤 RETRO B&W</div>
+        <p class="style-note">Gaya thermal klasik.</p>
+      </button>
+    </div>
+    <div class="actions">
+      <button class="secondary" id="backPreviewBtn">KEMBALI</button>
+    </div>
+    <div class="small">Semua pemprosesan dalam versi ini dibuat terus pada iPad. Tiada API berbayar digunakan.</div>
+  </section>
 
-<section id="filterScreen" class="screen center">
-  <div class="brand" style="font-size:clamp(24px,5vw,44px)">PILIH FILTER</div>
-  <div class="filterGrid">
-    <button class="filterCard selected" data-filter="original"><img id="thumbOriginal"><div class="filterName">Original</div></button>
-    <button class="filterCard" data-filter="bw"><img id="thumbBw"><div class="filterName">B&W</div></button>
-    <button class="filterCard" data-filter="comic"><img id="thumbComic"><div class="filterName">Soft Comic</div></button>
-    <button class="filterCard" data-filter="retro"><img id="thumbRetro"><div class="filterName">Retro B&W</div></button>
-  </div>
-  <div class="actions">
-    <button id="filterBackBtn" class="btn">KEMBALI</button>
-    <button id="filterNextBtn" class="btn primary">TERUSKAN</button>
-  </div>
-</section>
-
-<section id="finalScreen" class="screen center">
-  <div class="brand" style="font-size:clamp(24px,5vw,44px)">KOTA SNAP</div>
-  <div class="finalLayout"><canvas id="finalCanvas"></canvas></div>
-  <div class="actions">
-    <button id="finalBackBtn" class="btn">UBAH FILTER</button>
-    <button id="printBtn" class="btn primary">CETAK</button>
-  </div>
-  <div class="note">Reka bentuk & aliran cetak sudah disediakan. Sambungan terus ke Zywell akan ditambah pada modul print.</div>
-</section>
-
-<div id="status"></div>
+  <section id="final" class="screen final-screen">
+    <div class="title" id="finalTitle">KOTA SNAP</div>
+    <canvas id="finalCanvas" width="384" height="760"></canvas>
+    <div class="actions">
+      <button class="secondary" id="backStyleBtn">TUKAR STYLE</button>
+      <button class="primary" style="margin:0" id="printBtn">CETAK</button>
+    </div>
+    <div class="small" id="printNote">Cetak belum disambungkan dalam versi ujian ini.</div>
+  </section>
+</div>
+<div id="notice" class="notice"></div>
 
 <script>
-(() => {
-  const screens = [...document.querySelectorAll('.screen')];
-  const video = document.getElementById('video');
-  const countdown = document.getElementById('countdown');
-  const photoPreview = document.getElementById('photoPreview');
-  const finalCanvas = document.getElementById('finalCanvas');
-  const ctx = finalCanvas.getContext('2d');
+const screens = [...document.querySelectorAll('.screen')];
+const video = document.getElementById('video');
+const countdown = document.getElementById('countdown');
+const previewImg = document.getElementById('previewImg');
+const finalCanvas = document.getElementById('finalCanvas');
+let stream=null, rawImage=null, selectedStyle='line';
 
-  let stream = null;
-  let rawData = null;
-  let selectedFilter = 'original';
-
-  function show(id){
-    screens.forEach(s => s.classList.toggle('active', s.id === id));
-    window.scrollTo(0,0);
-  }
-  function setStatus(t){ document.getElementById('status').textContent=t||''; }
-
-  async function openCamera(){
-    if(stream) return;
-    try{
-      stream = await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},
-        audio:false
-      });
-      video.srcObject = stream;
-      // IMPORTANT: no mirror transform. The front camera is displayed left-right normally.
-      video.style.transform = 'none';
-      await video.play();
-    }catch(e){
-      setStatus('Kamera tidak dapat dibuka. Benarkan Camera dalam Settings Safari.');
-      console.error(e);
-    }
-  }
-
-  function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-  async function startSession(){
-    await openCamera();
-    show('cameraScreen');
-    setStatus('');
-    // Small delay prevents the tap on MULA SESI from triggering any newly-rendered button.
-    await wait(250);
-    await doCountdown();
-  }
-
-  async function doCountdown(){
-    const nums=['3','2','1'];
-    countdown.classList.add('show');
-    for(const n of nums){
-      countdown.textContent=n;
-      await wait(700);
-    }
-    countdown.textContent='📸';
-    await wait(250);
-    countdown.classList.remove('show');
-    capture();
-  }
-
-  function capture(){
-    if(!video.videoWidth){
-      setStatus('Kamera belum bersedia. Cuba lagi.');
-      return;
-    }
-    const c=document.createElement('canvas');
-    c.width=video.videoWidth; c.height=video.videoHeight;
-    const x=c.getContext('2d');
-    // Draw directly: no horizontal flip.
-    x.drawImage(video,0,0,c.width,c.height);
-    rawData=c.toDataURL('image/jpeg',0.92);
-    photoPreview.src=rawData;
-    show('previewScreen');
-  }
-
-  function retake(){
-    show('cameraScreen');
-    // Do not automatically trigger another capture from the old tap.
-    setTimeout(()=>doCountdown(),300);
-  }
-
-  function makeThumb(id, filter){
-    const im=document.getElementById(id);
-    const src=new Image();
-    src.onload=()=>{ 
-      const c=document.createElement('canvas'); c.width=360;c.height=360;
-      const x=c.getContext('2d');
-      const scale=Math.max(360/src.width,360/src.height);
-      const w=src.width*scale,h=src.height*scale;
-      x.drawImage(src,(360-w)/2,(360-h)/2,w,h);
-      applyFilterCanvas(x,360,360,filter);
-      im.src=c.toDataURL('image/jpeg',0.88);
-    };
-    src.src=rawData;
-  }
-
-  function applyFilterCanvas(x,w,h,filter){
-    if(filter==='original') return;
-    const img=x.getImageData(0,0,w,h), d=img.data;
-    for(let i=0;i<d.length;i+=4){
-      let r=d[i],g=d[i+1],b=d[i+2];
-      if(filter==='bw'){
-        const y=0.299*r+0.587*g+0.114*b;
-        d[i]=d[i+1]=d[i+2]=y;
-      }else if(filter==='retro'){
-        const y=0.299*r+0.587*g+0.114*b;
-        const v=Math.max(0,Math.min(255,(y-128)*1.18+128));
-        d[i]=d[i+1]=d[i+2]=v;
-      }else if(filter==='comic'){
-        // Soft comic: grayscale + moderate contrast, not hard threshold.
-        const y=0.299*r+0.587*g+0.114*b;
-        const v=Math.max(0,Math.min(255,(y-128)*1.35+128));
-        d[i]=d[i+1]=d[i+2]=v;
-      }
-    }
-    x.putImageData(img,0,0);
-  }
-
-  function prepareFilters(){
-    makeThumb('thumbOriginal','original');
-    makeThumb('thumbBw','bw');
-    makeThumb('thumbComic','comic');
-    makeThumb('thumbRetro','retro');
-  }
-
-  function drawFinal(){
-    const img=new Image();
-    img.onload=()=>{
-      const W=384,H=760;
-      finalCanvas.width=W; finalCanvas.height=H;
-      ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='#111';ctx.textAlign='center';
-      ctx.font='bold 31px Arial';ctx.fillText('KOTA KOPI',W/2,45);
-      ctx.font='italic bold 24px Arial';ctx.fillText('KOTA SNAP',W/2,73);
-      ctx.font='bold 9px Arial';ctx.fillText('GOOD COFFEE  ·  GOOD PEOPLE  ·  GOOD DAYS',W/2,100);
-      ctx.strokeStyle='#777';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(28,118);ctx.lineTo(356,118);ctx.stroke();
-
-      const px=28,py=136,pw=328,ph=400;
-      ctx.save();ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.clip();
-      const scale=Math.max(pw/img.width,ph/img.height);
-      const iw=img.width*scale,ih=img.height*scale;
-      ctx.drawImage(img,px+(pw-iw)/2,py+(ph-ih)/2,iw,ih);
-      applyFilterCanvas(ctx,384,760,selectedFilter);
-      ctx.restore();
-
-      ctx.fillStyle='#111';ctx.textAlign='left';
-      ctx.font='bold 12px Arial';ctx.fillText(dateText(),28,566);
-      ctx.textAlign='right';ctx.fillText(timeText(),356,566);
-      ctx.textAlign='center';ctx.font='bold 13px Arial';ctx.fillText('THANK YOU!',W/2,625);
-      ctx.font='11px Arial';ctx.fillText('FOR BEING HERE ♥',W/2,646);
-      ctx.strokeStyle='#222';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(28,675);ctx.lineTo(356,675);ctx.stroke();
-      ctx.font='bold 9px Arial';ctx.fillText('KOTA KOPI  ·  KOTA KUALA MUDA, KEDAH',W/2,700);
-      ctx.font='8px Arial';ctx.fillText('COFFEE  ·  PEOPLE  ·  STORIES',W/2,716);
-    };
-    img.src=rawData;
-  }
-
-  function dateText(){
-    return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(new Date()).toUpperCase();
-  }
-  function timeText(){
-    return new Intl.DateTimeFormat('en-MY',{hour:'2-digit',minute:'2-digit',hour12:true}).format(new Date()).toUpperCase();
-  }
-
-  document.getElementById('startBtn').addEventListener('click', startSession);
-  document.getElementById('snapBtn').addEventListener('click', capture);
-  document.getElementById('retakeBtn').addEventListener('click', retake);
-  document.getElementById('useBtn').addEventListener('click', ()=>{
-    prepareFilters();
-    show('filterScreen');
-  });
-  document.getElementById('filterBackBtn').addEventListener('click',()=>show('previewScreen'));
-  document.querySelectorAll('.filterCard').forEach(card=>{
-    card.addEventListener('click',()=>{
-      document.querySelectorAll('.filterCard').forEach(c=>c.classList.remove('selected'));
-      card.classList.add('selected');
-      selectedFilter=card.dataset.filter;
+function show(id){
+  screens.forEach(s=>s.classList.toggle('active',s.id===id));
+}
+function notice(t){
+  const n=document.getElementById('notice'); n.textContent=t; n.style.display='block';
+  clearTimeout(notice.t); notice.t=setTimeout(()=>n.style.display='none',2200);
+}
+async function startCamera(){
+  try{
+    if(stream) stream.getTracks().forEach(t=>t.stop());
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'user'},width:{ideal:1280},height:{ideal:960}},
+      audio:false
     });
-  });
-  document.getElementById('filterNextBtn').addEventListener('click',()=>{
-    drawFinal();
-    show('finalScreen');
-  });
-  document.getElementById('finalBackBtn').addEventListener('click',()=>show('filterScreen'));
-  document.getElementById('printBtn').addEventListener('click',()=>{
-    setStatus('Paparan cetak sudah siap. Sambungan terus Zywell akan dimasukkan dalam modul print.');
-  });
+    video.srcObject=stream;
+    await video.play();
+    show('camera');
+  }catch(e){
+    notice('Kamera tidak dapat dibuka. Pastikan Safari beri izin kamera.');
+  }
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+async function takePhoto(){
+  countdown.style.display='flex';
+  for(const n of [3,2,1]){
+    countdown.textContent=n; await sleep(700);
+  }
+  countdown.textContent='';
+  await sleep(150);
+  const c=document.createElement('canvas');
+  const w=video.videoWidth||1280, h=video.videoHeight||960;
+  c.width=w;c.height=h;
+  const ctx=c.getContext('2d');
+  // No mirror: draw exactly as received from camera.
+  ctx.drawImage(video,0,0,w,h);
+  rawImage=c.toDataURL('image/jpeg',.92);
+  countdown.style.display='none';
+  previewImg.src=rawImage;
+  show('preview');
+}
+function imageToCanvas(src, effect){
+  const c=document.createElement('canvas');
+  const max=1000;
+  const scale=Math.min(1,max/src.width);
+  c.width=Math.round(src.width*scale); c.height=Math.round(src.height*scale);
+  const x=c.getContext('2d'); x.drawImage(src,0,0,c.width,c.height);
+  const img=x.getImageData(0,0,c.width,c.height), d=img.data;
+  for(let i=0;i<d.length;i+=4){
+    const r=d[i],g=d[i+1],b=d[i+2];
+    const lum=.299*r+.587*g+.114*b;
+    if(effect==='retro'){
+      const q=lum<80?0:lum<155?105:255;
+      d[i]=d[i+1]=d[i+2]=q;
+    }else if(effect==='line'){
+      const q=lum>165?255:lum<85?0:135;
+      d[i]=d[i+1]=d[i+2]=q;
+    }else{
+      // Local free cartoon approximation: posterized monochrome + high contrast.
+      const q=lum<65?0:lum<120?55:lum<180?170:255;
+      d[i]=d[i+1]=d[i+2]=q;
+    }
+  }
+  x.putImageData(img,0,0);
+  if(effect==='line'){
+    // Sobel-like edge emphasis using neighboring pixels.
+    const src=x.getImageData(0,0,c.width,c.height), a=src.data, out=x.createImageData(c.width,c.height), o=out.data;
+    for(let y=1;y<c.height-1;y++) for(let xx=1;xx<c.width-1;xx++){
+      const p=(y*c.width+xx)*4;
+      const l=(y*c.width+xx-1)*4, r=(y*c.width+xx+1)*4;
+      const u=((y-1)*c.width+xx)*4, dn=((y+1)*c.width+xx)*4;
+      const gx=Math.abs(a[r]-a[l]), gy=Math.abs(a[dn]-a[u]), edge=gx+gy;
+      const v=edge>85?0:255;
+      o[p]=o[p+1]=o[p+2]=v;o[p+3]=255;
+    }
+    x.putImageData(out,0,0);
+  }
+  return c;
+}
+function loadImage(data){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=data})}
+async function renderThumbs(){
+  if(!rawImage)return;
+  const im=await loadImage(rawImage);
+  for(const [id,fx] of [['thumbCartoon','cartoon'],['thumbLine','line'],['thumbRetro','retro']]){
+    const src=imageToCanvas(im,fx), t=document.getElementById(id),ctx=t.getContext('2d');
+    t.width=src.width;t.height=src.height;ctx.drawImage(src,0,0);
+  }
+}
+function drawTemplate(photoCanvas, styleName){
+  const c=finalCanvas,ctx=c.getContext('2d'),W=c.width,H=c.height;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#111';ctx.textAlign='center';
+  ctx.font='900 24px Arial';ctx.fillText('KOTA KOPI',W/2,38);
+  ctx.font='900 15px Arial';ctx.fillText('KOTA SNAP',W/2,61);
+  ctx.font='10px Arial';ctx.fillText('COFFEE • PEOPLE • STORIES',W/2,79);
+  ctx.fillStyle='#111';ctx.fillRect(16,94,W-32,520);
+  const pad=22, pw=W-44, ph=492;
+  const s=Math.min(pw/photoCanvas.width,ph/photoCanvas.height);
+  const dw=photoCanvas.width*s,dh=photoCanvas.height*s;
+  ctx.drawImage(photoCanvas,pad+(pw-dw)/2,108+(ph-dh)/2,dw,dh);
+  ctx.fillStyle='#111';ctx.font='11px Arial';
+  const now=new Date();
+  const date=now.toLocaleDateString('ms-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const time=now.toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'});
+  ctx.fillText(date+'  •  '+time,W/2,645);
+  ctx.font='900 16px Arial';ctx.fillText('THANK YOU!',W/2,676);
+  ctx.font='11px Arial';ctx.fillText('FOR BEING HERE ♥',W/2,696);
+  ctx.font='9px Arial';ctx.fillText('Kota Kopi • Kota Kuala Muda, Kedah',W/2,731);
+  ctx.font='8px Arial';ctx.fillText(styleName.toUpperCase(),W/2,748);
+}
+async function chooseStyle(style){
+  selectedStyle=style;
+  document.querySelectorAll('.style-card').forEach(b=>b.classList.toggle('selected',b.dataset.style===style));
+  const im=await loadImage(rawImage);
+  const fx=style==='cartoon'?'cartoon':style;
+  const processed=imageToCanvas(im,fx);
+  const names={cartoon:'RECEIPT CARTOON',line:'LINE ART',retro:'RETRO B&W'};
+  drawTemplate(processed,names[style]);
+  document.getElementById('finalTitle').textContent=names[style];
+  show('final');
+}
+document.getElementById('startBtn').onclick=startCamera;
+document.getElementById('captureBtn').onclick=takePhoto;
+document.getElementById('retakeBtn').onclick=()=>show('camera');
+document.getElementById('useBtn').onclick=async()=>{show('styles');await renderThumbs()};
+document.getElementById('backPreviewBtn').onclick=()=>show('preview');
+document.getElementById('backStyleBtn').onclick=()=>show('styles');
+document.querySelectorAll('.style-card').forEach(b=>b.onclick=()=>chooseStyle(b.dataset.style));
+document.getElementById('printBtn').onclick=()=>notice('CETAK belum disambungkan — Zywell akan disambung kemudian.');
 
-  // Keep camera alive while navigating within the app.
-  window.addEventListener('pagehide',()=>{ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} });
-})();
+window.addEventListener('beforeunload',()=>{if(stream)stream.getTracks().forEach(t=>t.stop())});
 </script>
 </body>
 </html>
