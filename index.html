@@ -3,98 +3,295 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#080808">
+<meta name="theme-color" content="#0b0b0b">
 <title>Kota Snap</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;background:#080808;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;overflow:hidden}
-button{font:inherit;border:0;cursor:pointer;touch-action:manipulation}
-.screen{position:fixed;inset:0;display:none;background:#080808}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080808;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+body{touch-action:manipulation}
+.screen{position:fixed;inset:0;display:none;overflow:hidden;background:#080808}
 .screen.active{display:flex}
-#home{align-items:center;justify-content:center;text-align:center;padding:24px}
-.brand{letter-spacing:5px;font-size:clamp(30px,7vw,54px);font-weight:900;margin-bottom:8px}
-.sub{color:#aaa;letter-spacing:2px;font-size:clamp(12px,2.5vw,16px);margin-bottom:42px}
-.primary{background:#fff;color:#111;border-radius:999px;padding:18px 42px;min-width:min(78vw,340px);font-size:clamp(20px,4vw,28px);font-weight:900}
-.small{background:#222;color:#fff;border:1px solid #444;border-radius:999px;padding:13px 22px;font-weight:800}
-#cameraScreen{flex-direction:column}
-.cameraWrap{position:relative;flex:1;min-height:0;background:#000;overflow:hidden}
-video{width:100%;height:100%;object-fit:cover;display:block}
-.topbar{position:absolute;left:0;right:0;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:max(18px,env(safe-area-inset-top)) 18px 18px;background:linear-gradient(#0009,transparent)}
-.logo{font-weight:900;letter-spacing:3px;font-size:16px}
-.flip{background:#ffffffdd;color:#111;border-radius:999px;padding:10px 15px;font-weight:900}
-.countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(90px,25vw,190px);font-weight:900;text-shadow:0 5px 25px #000;pointer-events:none}
-.bottom{padding:14px 20px max(18px,env(safe-area-inset-bottom));background:#080808;text-align:center}
-.hint{color:#aaa;font-size:13px;margin-bottom:10px;min-height:18px}
-#previewScreen{align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:16px}
-.previewTitle{font-weight:900;letter-spacing:2px;font-size:18px}
-.previewBox{flex:1;min-height:0;width:min(82vw,520px);display:flex;align-items:center;justify-content:center}
-#photo{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px}
-.actions{width:100%;display:flex;gap:12px;justify-content:center;padding-bottom:max(4px,env(safe-area-inset-bottom))}
-.actions button{flex:1;max-width:240px}
-#doneScreen{align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:28px}
-.check{font-size:72px;margin-bottom:14px}.doneTitle{font-size:30px;font-weight:900}.doneText{color:#aaa;margin:10px 0 28px}
+.center{align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:28px}
+.brand{font-size:clamp(34px,7vw,70px);font-weight:900;letter-spacing:4px}
+.subbrand{font-size:clamp(18px,3.5vw,30px);font-weight:800;letter-spacing:2px;margin-top:5px}
+.tag{margin-top:18px;color:#aaa;font-size:clamp(13px,2vw,19px);letter-spacing:1px}
+.btn{border:1px solid #555;background:#252525;color:#fff;border-radius:999px;padding:18px 34px;font-size:clamp(17px,3vw,26px);font-weight:800;min-width:210px;margin-top:28px}
+.btn.primary{background:#fff;color:#111;border-color:#fff}
+.btn:active{transform:scale(.98)}
+.small{font-size:13px;color:#888;margin-top:14px}
+
+#cameraScreen{background:#000;align-items:center;justify-content:center}
+#video{width:100%;height:100%;object-fit:cover;display:block;transform:none}
+.camShade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.25),transparent 25%,transparent 72%,rgba(0,0,0,.4))}
+.camTop{position:absolute;top:0;left:0;right:0;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:16px}
+.camBottom{position:absolute;bottom:0;left:0;right:0;padding:24px 22px 32px;display:flex;justify-content:center}
+.countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:clamp(90px,22vw,220px);font-weight:900;text-shadow:0 5px 30px #000}
+.countdown.show{display:flex}
+
+.previewWrap{width:min(90vw,760px);height:min(72vh,760px);display:flex;align-items:center;justify-content:center}
+#photoPreview{max-width:100%;max-height:100%;object-fit:contain;border-radius:18px;background:#111;box-shadow:0 15px 50px #000}
+.actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.actions .btn{margin-top:18px}
+
+.filterGrid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:14px;width:min(92vw,900px)}
+.filterCard{background:#161616;border:2px solid #333;border-radius:18px;padding:10px;cursor:pointer}
+.filterCard.selected{border-color:#fff}
+.filterCard img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;display:block}
+.filterName{font-weight:800;margin-top:9px;font-size:15px}
+@media(max-width:650px){.filterGrid{grid-template-columns:repeat(2,1fr)}}
+
+.finalLayout{width:min(94vw,900px);height:min(78vh,820px);display:flex;align-items:center;justify-content:center}
+#finalCanvas{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;box-shadow:0 12px 50px #000;background:#fff}
+.note{color:#999;font-size:13px;margin-top:10px}
+
+#status{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);color:#777;font-size:11px;z-index:20;pointer-events:none}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-<section id="home" class="screen active">
-  <div>
-    <div class="brand">KOTA SNAP</div>
-    <div class="sub">COFFEE • PEOPLE • STORIES</div>
-    <button id="startBtn" class="primary">📸 MULA SESI</button>
-  </div>
+
+<section id="home" class="screen active center">
+  <div class="brand">KOTA KOPI</div>
+  <div class="subbrand">KOTA SNAP</div>
+  <div class="tag">GOOD COFFEE · GOOD PEOPLE · GOOD DAYS</div>
+  <button id="startBtn" class="btn primary">MULA SESI</button>
+  <div class="small">1 foto · pilih filter · preview · siap untuk cetak</div>
 </section>
 
 <section id="cameraScreen" class="screen">
-  <div class="cameraWrap">
-    <video id="video" autoplay playsinline muted></video>
-    <div class="topbar"><div class="logo">KOTA SNAP</div><button id="flipBtn" class="flip">↔ KAMERA</button></div>
-    <div id="countdown" class="countdown"></div>
-  </div>
-  <div class="bottom"><div id="hint" class="hint">Bersedia...</div><button id="captureBtn" class="primary">MULA</button></div>
+  <video id="video" autoplay playsinline muted></video>
+  <div class="camShade"></div>
+  <div class="camTop"><span>KOTA SNAP</span><span>1 FOTO</span></div>
+  <div id="countdown" class="countdown"></div>
+  <div class="camBottom"><button id="snapBtn" class="btn primary">AMBIL FOTO</button></div>
 </section>
 
-<section id="previewScreen" class="screen">
-  <div class="previewTitle">PREVIEW FOTO</div>
-  <div class="previewBox"><img id="photo" alt="Foto Kota Snap"></div>
+<section id="previewScreen" class="screen center">
+  <div class="brand" style="font-size:clamp(24px,5vw,44px)">PREVIEW</div>
+  <div class="previewWrap"><img id="photoPreview" alt="Preview foto"></div>
   <div class="actions">
-    <button id="retakeBtn" class="small">↻ RETAKE</button>
-    <button id="useBtn" class="primary">✓ GUNA FOTO</button>
+    <button id="retakeBtn" class="btn">↻ AMBIL SEMULA</button>
+    <button id="useBtn" class="btn primary">GUNA FOTO</button>
   </div>
 </section>
 
-<section id="doneScreen" class="screen">
-  <div class="check">✓</div><div class="doneTitle">FOTO DITERIMA</div>
-  <div class="doneText">Seterusnya kita sambungkan filter dan template Kota Snap.</div>
-  <button id="againBtn" class="small">AMBIL SEMULA</button>
+<section id="filterScreen" class="screen center">
+  <div class="brand" style="font-size:clamp(24px,5vw,44px)">PILIH FILTER</div>
+  <div class="filterGrid">
+    <button class="filterCard selected" data-filter="original"><img id="thumbOriginal"><div class="filterName">Original</div></button>
+    <button class="filterCard" data-filter="bw"><img id="thumbBw"><div class="filterName">B&W</div></button>
+    <button class="filterCard" data-filter="comic"><img id="thumbComic"><div class="filterName">Soft Comic</div></button>
+    <button class="filterCard" data-filter="retro"><img id="thumbRetro"><div class="filterName">Retro B&W</div></button>
+  </div>
+  <div class="actions">
+    <button id="filterBackBtn" class="btn">KEMBALI</button>
+    <button id="filterNextBtn" class="btn primary">TERUSKAN</button>
+  </div>
 </section>
+
+<section id="finalScreen" class="screen center">
+  <div class="brand" style="font-size:clamp(24px,5vw,44px)">KOTA SNAP</div>
+  <div class="finalLayout"><canvas id="finalCanvas"></canvas></div>
+  <div class="actions">
+    <button id="finalBackBtn" class="btn">UBAH FILTER</button>
+    <button id="printBtn" class="btn primary">CETAK</button>
+  </div>
+  <div class="note">Reka bentuk & aliran cetak sudah disediakan. Sambungan terus ke Zywell akan ditambah pada modul print.</div>
+</section>
+
+<div id="status"></div>
 
 <script>
-const screens={home:document.getElementById('home'),camera:document.getElementById('cameraScreen'),preview:document.getElementById('previewScreen'),done:document.getElementById('doneScreen')};
-const video=document.getElementById('video'), countdown=document.getElementById('countdown'), hint=document.getElementById('hint');
-const photo=document.getElementById('photo');
-let stream=null,facing='user',busy=false;
-function show(name){Object.values(screens).forEach(s=>s.classList.remove('active'));screens[name].classList.add('active')}
-async function openCamera(){
- if(stream)stream.getTracks().forEach(t=>t.stop());
- try{
-  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:facing},width:{ideal:1280},height:{ideal:720}},audio:false});
-  video.srcObject=stream; await video.play(); return true;
- }catch(e){alert('Tak dapat akses kamera. Pastikan Camera = Allow dalam Safari.');return false}
-}
-async function prepare(){show('camera');hint.textContent='Kamera sedang dibuka...';const ok=await openCamera();if(ok)hint.textContent='Tekan MULA untuk ambil 1 gambar.'}
-async function capture(){if(busy)return;busy=true;if(!stream&&!(await openCamera())){busy=false;return}
- document.getElementById('captureBtn').disabled=true;
- for(let n=3;n>=1;n--){countdown.textContent=n;await new Promise(r=>setTimeout(r,700))}
- countdown.textContent='📸';await new Promise(r=>setTimeout(r,250));
- const c=document.createElement('canvas');c.width=video.videoWidth||1280;c.height=video.videoHeight||720;c.getContext('2d').drawImage(video,0,0,c.width,c.height);
- photo.src=c.toDataURL('image/jpeg',.94);countdown.textContent='';show('preview');document.getElementById('captureBtn').disabled=false;busy=false;
-}
-document.getElementById('startBtn').onclick=prepare;
-document.getElementById('captureBtn').onclick=capture;
-document.getElementById('flipBtn').onclick=async()=>{if(busy)return;facing=facing==='user'?'environment':'user';hint.textContent='Menukar kamera...';await openCamera();hint.textContent='Tekan MULA untuk ambil 1 gambar.'};
-document.getElementById('retakeBtn').onclick=()=>{show('camera');hint.textContent='Tekan MULA untuk ambil semula.'};
-document.getElementById('useBtn').onclick=()=>show('done');
-document.getElementById('againBtn').onclick=prepare;
+(() => {
+  const screens = [...document.querySelectorAll('.screen')];
+  const video = document.getElementById('video');
+  const countdown = document.getElementById('countdown');
+  const photoPreview = document.getElementById('photoPreview');
+  const finalCanvas = document.getElementById('finalCanvas');
+  const ctx = finalCanvas.getContext('2d');
+
+  let stream = null;
+  let rawData = null;
+  let selectedFilter = 'original';
+
+  function show(id){
+    screens.forEach(s => s.classList.toggle('active', s.id === id));
+    window.scrollTo(0,0);
+  }
+  function setStatus(t){ document.getElementById('status').textContent=t||''; }
+
+  async function openCamera(){
+    if(stream) return;
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},
+        audio:false
+      });
+      video.srcObject = stream;
+      // IMPORTANT: no mirror transform. The front camera is displayed left-right normally.
+      video.style.transform = 'none';
+      await video.play();
+    }catch(e){
+      setStatus('Kamera tidak dapat dibuka. Benarkan Camera dalam Settings Safari.');
+      console.error(e);
+    }
+  }
+
+  function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+  async function startSession(){
+    await openCamera();
+    show('cameraScreen');
+    setStatus('');
+    // Small delay prevents the tap on MULA SESI from triggering any newly-rendered button.
+    await wait(250);
+    await doCountdown();
+  }
+
+  async function doCountdown(){
+    const nums=['3','2','1'];
+    countdown.classList.add('show');
+    for(const n of nums){
+      countdown.textContent=n;
+      await wait(700);
+    }
+    countdown.textContent='📸';
+    await wait(250);
+    countdown.classList.remove('show');
+    capture();
+  }
+
+  function capture(){
+    if(!video.videoWidth){
+      setStatus('Kamera belum bersedia. Cuba lagi.');
+      return;
+    }
+    const c=document.createElement('canvas');
+    c.width=video.videoWidth; c.height=video.videoHeight;
+    const x=c.getContext('2d');
+    // Draw directly: no horizontal flip.
+    x.drawImage(video,0,0,c.width,c.height);
+    rawData=c.toDataURL('image/jpeg',0.92);
+    photoPreview.src=rawData;
+    show('previewScreen');
+  }
+
+  function retake(){
+    show('cameraScreen');
+    // Do not automatically trigger another capture from the old tap.
+    setTimeout(()=>doCountdown(),300);
+  }
+
+  function makeThumb(id, filter){
+    const im=document.getElementById(id);
+    const src=new Image();
+    src.onload=()=>{ 
+      const c=document.createElement('canvas'); c.width=360;c.height=360;
+      const x=c.getContext('2d');
+      const scale=Math.max(360/src.width,360/src.height);
+      const w=src.width*scale,h=src.height*scale;
+      x.drawImage(src,(360-w)/2,(360-h)/2,w,h);
+      applyFilterCanvas(x,360,360,filter);
+      im.src=c.toDataURL('image/jpeg',0.88);
+    };
+    src.src=rawData;
+  }
+
+  function applyFilterCanvas(x,w,h,filter){
+    if(filter==='original') return;
+    const img=x.getImageData(0,0,w,h), d=img.data;
+    for(let i=0;i<d.length;i+=4){
+      let r=d[i],g=d[i+1],b=d[i+2];
+      if(filter==='bw'){
+        const y=0.299*r+0.587*g+0.114*b;
+        d[i]=d[i+1]=d[i+2]=y;
+      }else if(filter==='retro'){
+        const y=0.299*r+0.587*g+0.114*b;
+        const v=Math.max(0,Math.min(255,(y-128)*1.18+128));
+        d[i]=d[i+1]=d[i+2]=v;
+      }else if(filter==='comic'){
+        // Soft comic: grayscale + moderate contrast, not hard threshold.
+        const y=0.299*r+0.587*g+0.114*b;
+        const v=Math.max(0,Math.min(255,(y-128)*1.35+128));
+        d[i]=d[i+1]=d[i+2]=v;
+      }
+    }
+    x.putImageData(img,0,0);
+  }
+
+  function prepareFilters(){
+    makeThumb('thumbOriginal','original');
+    makeThumb('thumbBw','bw');
+    makeThumb('thumbComic','comic');
+    makeThumb('thumbRetro','retro');
+  }
+
+  function drawFinal(){
+    const img=new Image();
+    img.onload=()=>{
+      const W=384,H=760;
+      finalCanvas.width=W; finalCanvas.height=H;
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#111';ctx.textAlign='center';
+      ctx.font='bold 31px Arial';ctx.fillText('KOTA KOPI',W/2,45);
+      ctx.font='italic bold 24px Arial';ctx.fillText('KOTA SNAP',W/2,73);
+      ctx.font='bold 9px Arial';ctx.fillText('GOOD COFFEE  ·  GOOD PEOPLE  ·  GOOD DAYS',W/2,100);
+      ctx.strokeStyle='#777';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(28,118);ctx.lineTo(356,118);ctx.stroke();
+
+      const px=28,py=136,pw=328,ph=400;
+      ctx.save();ctx.beginPath();ctx.rect(px,py,pw,ph);ctx.clip();
+      const scale=Math.max(pw/img.width,ph/img.height);
+      const iw=img.width*scale,ih=img.height*scale;
+      ctx.drawImage(img,px+(pw-iw)/2,py+(ph-ih)/2,iw,ih);
+      applyFilterCanvas(ctx,384,760,selectedFilter);
+      ctx.restore();
+
+      ctx.fillStyle='#111';ctx.textAlign='left';
+      ctx.font='bold 12px Arial';ctx.fillText(dateText(),28,566);
+      ctx.textAlign='right';ctx.fillText(timeText(),356,566);
+      ctx.textAlign='center';ctx.font='bold 13px Arial';ctx.fillText('THANK YOU!',W/2,625);
+      ctx.font='11px Arial';ctx.fillText('FOR BEING HERE ♥',W/2,646);
+      ctx.strokeStyle='#222';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(28,675);ctx.lineTo(356,675);ctx.stroke();
+      ctx.font='bold 9px Arial';ctx.fillText('KOTA KOPI  ·  KOTA KUALA MUDA, KEDAH',W/2,700);
+      ctx.font='8px Arial';ctx.fillText('COFFEE  ·  PEOPLE  ·  STORIES',W/2,716);
+    };
+    img.src=rawData;
+  }
+
+  function dateText(){
+    return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(new Date()).toUpperCase();
+  }
+  function timeText(){
+    return new Intl.DateTimeFormat('en-MY',{hour:'2-digit',minute:'2-digit',hour12:true}).format(new Date()).toUpperCase();
+  }
+
+  document.getElementById('startBtn').addEventListener('click', startSession);
+  document.getElementById('snapBtn').addEventListener('click', capture);
+  document.getElementById('retakeBtn').addEventListener('click', retake);
+  document.getElementById('useBtn').addEventListener('click', ()=>{
+    prepareFilters();
+    show('filterScreen');
+  });
+  document.getElementById('filterBackBtn').addEventListener('click',()=>show('previewScreen'));
+  document.querySelectorAll('.filterCard').forEach(card=>{
+    card.addEventListener('click',()=>{
+      document.querySelectorAll('.filterCard').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedFilter=card.dataset.filter;
+    });
+  });
+  document.getElementById('filterNextBtn').addEventListener('click',()=>{
+    drawFinal();
+    show('finalScreen');
+  });
+  document.getElementById('finalBackBtn').addEventListener('click',()=>show('filterScreen'));
+  document.getElementById('printBtn').addEventListener('click',()=>{
+    setStatus('Paparan cetak sudah siap. Sambungan terus Zywell akan dimasukkan dalam modul print.');
+  });
+
+  // Keep camera alive while navigating within the app.
+  window.addEventListener('pagehide',()=>{ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;} });
+})();
 </script>
 </body>
 </html>
