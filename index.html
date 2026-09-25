@@ -7,11 +7,11 @@
 <section id="previewScreen" class="screen preview"><div class="title">SEMAK GAMBAR</div><canvas id="canvas" width="384" height="760"></canvas><div class="actions"><button id="again" class="btn dark">KEMBALI</button><button id="print" class="btn white">PRINT</button></div><div id="status" class="status">Template siap. Printer akan disambungkan kemudian.</div></section>
 <section id="doneScreen" class="screen done"><h1>TERIMA KASIH! ♡</h1><p>Sila ambil gambar anda.</p><button id="done" class="btn white">SELESAI</button></section>
 <script>
-const PINS=["1111","2222","3333","4444","5555"],used=JSON.parse(localStorage.getItem("kotaSnapUsedPins")||"[]");let pinNow="",stream=null;
+const PINS=["7777","8888","9999"],used=JSON.parse(localStorage.getItem("kotaSnapUsedPins_v3")||"[]");let pinNow="",stream=null;
 const $=x=>document.getElementById(x),show=id=>document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id)),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function openCam(){try{if(stream)stream.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"user"},width:{ideal:1280},height:{ideal:960}},audio:false});$("video").srcObject=stream;await $("video").play();show("camScreen")}catch(e){$("err").textContent="Kamera tidak dapat dibuka. Benarkan Camera untuk Safari.";show("pinScreen")}}
 async function login(){let p=$("pin").value.trim();$("err").textContent="";if(!p)return $("err").textContent="Sila masukkan PIN.";if(!PINS.includes(p))return $("err").textContent="PIN tidak sah.";if(used.includes(p))return $("err").textContent="PIN ini sudah digunakan.";pinNow=p;await openCam()}
-async function snap(){$("start").disabled=true;$("count").style.display="flex";for(const n of [5,4,3,2,1]){$("count").textContent=n;await sleep(700)}$("count").textContent="";let v=$("video"),src=document.createElement("canvas");src.width=v.videoWidth||1280;src.height=v.videoHeight||960;src.getContext("2d").drawImage(v,0,0,src.width,src.height);used.push(pinNow);localStorage.setItem("kotaSnapUsedPins",JSON.stringify(used));if(stream)stream.getTracks().forEach(t=>t.stop());draw(src);$("count").style.display="none";$("start").disabled=false;show("previewScreen")}
+async function snap(){$("start").disabled=true;$("count").style.display="flex";for(const n of [5,4,3,2,1]){$("count").textContent=n;await sleep(700)}$("count").textContent="";let v=$("video"),src=document.createElement("canvas");src.width=v.videoWidth||1280;src.height=v.videoHeight||960;src.getContext("2d").drawImage(v,0,0,src.width,src.height);used.push(pinNow);localStorage.setItem("kotaSnapUsedPins_v3",JSON.stringify(used));if(stream)stream.getTracks().forEach(t=>t.stop());draw(src);$("count").style.display="none";$("start").disabled=false;show("previewScreen")}
 function draw(photo){
   // KOTA SNAP template — based on the supplied reference.
   const W=384;
@@ -130,13 +130,11 @@ $("pinBtn").onclick=login;$("pin").onkeydown=e=>{if(e.key==="Enter")login()};$("
     try{
       if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
         await navigator.share({files:[file],title:"Kota Snap"});
-      }else if(navigator.share){
-        await navigator.share({title:"Kota Snap",text:"Kota Snap"});
       }else{
-        $("status").textContent="Share tidak disokong pada browser ini.";
+        $("status").textContent="Share Sheet tidak disokong pada iPad/browser ini.";
       }
     }catch(e){
-      if(e && e.name!=="AbortError") $("status").textContent="Share dibatalkan atau gagal.";
+      if(e && e.name!=="AbortError") $("status").textContent="Share gagal.";
     }
   },"image/png");
 };show("doneScreen")};$("done").onclick=()=>{pinNow="";$("pin").value="";show("pinScreen");};
