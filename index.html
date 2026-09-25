@@ -65,8 +65,8 @@ function draw(photo){
       sy=Math.round((photo.height-sh)/2);
     }
 
-    // Thermal-printer preview: convert the customer photo to true black/white.
-    // This lets the preview resemble the final monochrome thermal print.
+    // Preview photo in normal grayscale only.
+    // Keep all shades of grey; do NOT threshold into pure black/white.
     const pw=photoW-8, ph=photoH-8;
     const temp=document.createElement("canvas");
     temp.width=pw; temp.height=ph;
@@ -76,10 +76,11 @@ function draw(photo){
     const img=tx.getImageData(0,0,pw,ph);
     const d=img.data;
     for(let i=0;i<d.length;i+=4){
-      const gray=(0.299*d[i])+(0.587*d[i+1])+(0.114*d[i+2]);
-      // Slightly lower threshold gives faces/details more visible on thermal paper.
-      const bw=gray<145?0:255;
-      d[i]=bw; d[i+1]=bw; d[i+2]=bw; d[i+3]=255;
+      const gray=Math.round((0.299*d[i])+(0.587*d[i+1])+(0.114*d[i+2]));
+      d[i]=gray;
+      d[i+1]=gray;
+      d[i+2]=gray;
+      d[i+3]=255;
     }
     tx.putImageData(img,0,0);
     x.drawImage(temp,side+4,photoY+4);
