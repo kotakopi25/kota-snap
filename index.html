@@ -122,5 +122,22 @@ function draw(photo){
   }
 }
 async function resetToCamera(){ $("status").textContent=""; await openCam(); }
-$("pinBtn").onclick=login;$("pin").onkeydown=e=>{if(e.key==="Enter")login()};$("start").onclick=snap;$("again").onclick=resetToCamera;$("print").onclick=()=>{$("status").textContent="PRINT belum disambungkan ke Zywell. Flow gambar sudah siap.";show("doneScreen")};$("done").onclick=()=>{pinNow="";$("pin").value="";show("pinScreen");};
+$("pinBtn").onclick=login;$("pin").onkeydown=e=>{if(e.key==="Enter")login()};$("start").onclick=snap;$("again").onclick=resetToCamera;$("print").onclick=async()=>{
+  const canvas=$("canvas");
+  canvas.toBlob(async(blob)=>{
+    if(!blob){$("status").textContent="Gagal menyediakan gambar untuk print.";return;}
+    const file=new File([blob],"kota-snap.png",{type:"image/png"});
+    try{
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:"Kota Snap"});
+      }else if(navigator.share){
+        await navigator.share({title:"Kota Snap",text:"Kota Snap"});
+      }else{
+        $("status").textContent="Share tidak disokong pada browser ini.";
+      }
+    }catch(e){
+      if(e && e.name!=="AbortError") $("status").textContent="Share dibatalkan atau gagal.";
+    }
+  },"image/png");
+};show("doneScreen")};$("done").onclick=()=>{pinNow="";$("pin").value="";show("pinScreen");};
 </script></body></html>
