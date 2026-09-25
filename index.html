@@ -7,7 +7,7 @@
 <section id="previewScreen" class="screen preview"><div class="title">SEMAK GAMBAR</div><canvas id="canvas" width="384" height="760"></canvas><div class="actions"><button id="again" class="btn dark">KEMBALI</button><button id="print" class="btn white">PRINT</button></div><div id="status" class="status">Template siap. Printer akan disambungkan kemudian.</div></section>
 <section id="doneScreen" class="screen done"><h1>TERIMA KASIH! ♡</h1><p>Sila ambil gambar anda.</p><button id="done" class="btn white">SELESAI</button></section>
 <script>
-const PINS=["1234","5678","9999"],used=JSON.parse(localStorage.getItem("kotaSnapUsedPins")||"[]");let pinNow="",stream=null;
+const PINS=["1111","2222","3333","4444","5555"],used=JSON.parse(localStorage.getItem("kotaSnapUsedPins")||"[]");let pinNow="",stream=null;
 const $=x=>document.getElementById(x),show=id=>document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id)),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function openCam(){try{if(stream)stream.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"user"},width:{ideal:1280},height:{ideal:960}},audio:false});$("video").srcObject=stream;await $("video").play();show("camScreen")}catch(e){$("err").textContent="Kamera tidak dapat dibuka. Benarkan Camera untuk Safari.";show("pinScreen")}}
 async function login(){let p=$("pin").value.trim();$("err").textContent="";if(!p)return $("err").textContent="Sila masukkan PIN.";if(!PINS.includes(p))return $("err").textContent="PIN tidak sah.";if(used.includes(p))return $("err").textContent="PIN ini sudah digunakan.";pinNow=p;await openCam()}
@@ -64,7 +64,25 @@ function draw(photo){
       sh=Math.round(photo.width/dstRatio);
       sy=Math.round((photo.height-sh)/2);
     }
-    x.drawImage(photo,sx,sy,sw,sh,side+4,photoY+4,photoW-8,photoH-8);
+
+    // Thermal-printer preview: convert the customer photo to true black/white.
+    // This lets the preview resemble the final monochrome thermal print.
+    const pw=photoW-8, ph=photoH-8;
+    const temp=document.createElement("canvas");
+    temp.width=pw; temp.height=ph;
+    const tx=temp.getContext("2d");
+    tx.drawImage(photo,sx,sy,sw,sh,0,0,pw,ph);
+
+    const img=tx.getImageData(0,0,pw,ph);
+    const d=img.data;
+    for(let i=0;i<d.length;i+=4){
+      const gray=(0.299*d[i])+(0.587*d[i+1])+(0.114*d[i+2]);
+      // Slightly lower threshold gives faces/details more visible on thermal paper.
+      const bw=gray<145?0:255;
+      d[i]=bw; d[i+1]=bw; d[i+2]=bw; d[i+3]=255;
+    }
+    tx.putImageData(img,0,0);
+    x.drawImage(temp,side+4,photoY+4);
 
     // Re-draw border over photo
     x.lineWidth=4;
