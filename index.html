@@ -1,6 +1,6 @@
 <!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>KOTA SNAP</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090909;color:#fff;font-family:Arial,sans-serif}button,input{font:inherit}.screen{position:fixed;inset:0;display:none;overflow:hidden}.active{display:flex}.pin{align-items:center;justify-content:center;flex-direction:column}.logo{font-size:clamp(42px,9vw,76px);font-weight:900;letter-spacing:5px}.tag{color:#aaa;letter-spacing:3px;font-size:12px;margin-top:8px}.pinbox{width:min(420px,86vw);text-align:center;margin-top:40px}.pinbox label{display:block;font-weight:bold;margin-bottom:12px}#pin{width:100%;height:62px;border:2px solid #555;border-radius:16px;background:#151515;color:#fff;text-align:center;font-size:30px;letter-spacing:10px}.btn{border:0;border-radius:15px;padding:16px 30px;font-weight:900}.white{background:#fff;color:#000}.dark{background:#181818;color:#fff;border:1px solid #555}.pinbtn{width:100%;margin-top:14px}.err{color:#ffb3b3;font-size:12px;min-height:18px;margin-top:9px}.hint{color:#888;font-size:11px;margin-top:14px}.camera{background:#000;align-items:center;justify-content:center}#video{width:100%;height:100%;object-fit:cover;transform:none}.top{position:absolute;top:0;left:0;right:0;padding:18px;display:flex;justify-content:space-between;z-index:3;background:linear-gradient(#000b,transparent)}.pill{background:#0009;border:1px solid #fff3;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:bold}.start{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:min(340px,78vw);font-size:18px;z-index:3}.count{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0005;z-index:5;font-size:min(27vw,190px);font-weight:900}.preview{align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:14px}.title{font-size:24px;font-weight:900}#canvas{height:min(75vh,760px);max-width:92vw;background:#fff;border-radius:10px}.actions{display:flex;gap:10px;justify-content:center}.status{font-size:11px;color:#999;text-align:center}.done{align-items:center;justify-content:center;flex-direction:column;text-align:center}.done h1{font-size:34px}.done p{color:#aaa}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090909;color:#fff;font-family:Arial,sans-serif}button,input{font:inherit}.screen{position:fixed;inset:0;display:none;overflow:hidden}.active{display:flex}.pin{align-items:center;justify-content:center;flex-direction:column}.logo{font-size:clamp(42px,9vw,76px);font-weight:900;letter-spacing:5px}.tag{color:#aaa;letter-spacing:3px;font-size:12px;margin-top:8px}.pinbox{width:min(420px,86vw);text-align:center;margin-top:40px}.pinbox label{display:block;font-weight:bold;margin-bottom:12px}#pin{width:100%;height:62px;border:2px solid #555;border-radius:16px;background:#151515;color:#fff;text-align:center;font-size:30px;letter-spacing:10px}.btn{border:0;border-radius:15px;padding:16px 30px;font-weight:900}.white{background:#fff;color:#000}.dark{background:#181818;color:#fff;border:1px solid #555}.pinbtn{width:100%;margin-top:14px}.err{color:#ffb3b3;font-size:12px;min-height:18px;margin-top:9px}.hint{color:#888;font-size:11px;margin-top:14px}.camera{background:#000;align-items:center;justify-content:center}#video{width:100%;height:100%;object-fit:cover;transform:none}.top{position:absolute;top:0;left:0;right:0;padding:18px;display:flex;justify-content:space-between;z-index:3;background:linear-gradient(#000b,transparent)}.pill{background:#0009;border:1px solid #fff3;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:bold}.start{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);width:min(340px,78vw);font-size:18px;z-index:3}.count{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:#0005;z-index:5;font-size:min(27vw,190px);font-weight:900}.preview{align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:14px}.title{font-size:24px;font-weight:900}#canvas{max-height:70vh;max-width:92vw;width:min(92vw,384px);height:auto;background:#fff;border-radius:10px}.actions{display:flex;gap:10px;justify-content:center}.status{font-size:11px;color:#999;text-align:center}.done{align-items:center;justify-content:center;flex-direction:column;text-align:center}.done h1{font-size:34px}.done p{color:#aaa}
 </style></head><body>
 <section id="pinScreen" class="screen active pin"><div class="logo">KOTA SNAP</div><div class="tag">KOTA KOPI • PHOTOBOOTH</div><div class="pinbox"><label>Masukkan PIN pada resit pembelian</label><input id="pin" inputmode="numeric" maxlength="6" placeholder="••••"><button id="pinBtn" class="btn white pinbtn">MULA</button><div id="err" class="err"></div><div class="hint">1 PIN = 1 penggunaan</div></div></section>
 <section id="camScreen" class="screen camera"><div class="top"><div class="pill">KOTA SNAP</div><div class="pill">1 FOTO</div></div><video id="video" autoplay playsinline muted></video><div id="count" class="count"></div><button id="start" class="btn white start">MULA BERGAMBAR</button></section>
@@ -12,7 +12,43 @@ const $=x=>document.getElementById(x),show=id=>document.querySelectorAll(".scree
 async function openCam(){try{if(stream)stream.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"user"},width:{ideal:1280},height:{ideal:960}},audio:false});$("video").srcObject=stream;await $("video").play();show("camScreen")}catch(e){$("err").textContent="Kamera tidak dapat dibuka. Benarkan Camera untuk Safari.";show("pinScreen")}}
 async function login(){let p=$("pin").value.trim();$("err").textContent="";if(!p)return $("err").textContent="Sila masukkan PIN.";if(!PINS.includes(p))return $("err").textContent="PIN tidak sah.";if(used.includes(p))return $("err").textContent="PIN ini sudah digunakan.";pinNow=p;await openCam()}
 async function snap(){$("start").disabled=true;$("count").style.display="flex";for(const n of [5,4,3,2,1]){$("count").textContent=n;await sleep(700)}$("count").textContent="";let v=$("video"),src=document.createElement("canvas");src.width=v.videoWidth||1280;src.height=v.videoHeight||960;src.getContext("2d").drawImage(v,0,0,src.width,src.height);used.push(pinNow);localStorage.setItem("kotaSnapUsedPins",JSON.stringify(used));if(stream)stream.getTracks().forEach(t=>t.stop());draw(src);$("count").style.display="none";$("start").disabled=false;show("previewScreen")}
-function draw(photo){let c=$("canvas"),x=c.getContext("2d"),W=c.width,H=c.height;x.fillStyle="#fff";x.fillRect(0,0,W,H);x.fillStyle="#111";x.textAlign="center";x.font="900 24px Arial";x.fillText("KOTA KOPI",W/2,38);x.font="900 15px Arial";x.fillText("KOTA SNAP",W/2,61);x.font="10px Arial";x.fillText("COFFEE • PEOPLE • STORIES",W/2,79);x.fillStyle="#111";x.fillRect(16,94,W-32,520);let s=Math.min((W-44)/photo.width,492/photo.height),dw=photo.width*s,dh=photo.height*s;x.drawImage(photo,22+(W-44-dw)/2,108+(492-dh)/2,dw,dh);let n=new Date(),d=n.toLocaleDateString("ms-MY",{day:"2-digit",month:"2-digit",year:"numeric"}),t=n.toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit"});x.fillStyle="#111";x.font="11px Arial";x.fillText(d+" • "+t,W/2,645);x.font="900 16px Arial";x.fillText("THANK YOU!",W/2,676);x.font="11px Arial";x.fillText("FOR BEING HERE ♥",W/2,696);x.font="9px Arial";x.fillText("Kota Kopi • Kota Kuala Muda, Kedah",W/2,731)}
-function reset(){pinNow="";$("pin").value="";$("err").textContent="";show("pinScreen");setTimeout(()=>$("pin").focus(),100)}
-$("pinBtn").onclick=login;$("pin").onkeydown=e=>{if(e.key==="Enter")login()};$("start").onclick=snap;$("again").onclick=reset;$("print").onclick=()=>{$("status").textContent="PRINT belum disambungkan ke Zywell. Flow gambar sudah siap.";show("doneScreen")};$("done").onclick=reset;
+function draw(photo){
+  // Compact 58mm thermal layout: 384px wide, photo kept at its real aspect ratio.
+  const W=384;
+  const photoH=Math.round(W/(photo.width/photo.height));
+  const headerH=62;
+  const footerH=38;
+  const H=headerH+photoH+footerH;
+
+  const c=$("canvas");
+  c.width=W; c.height=H;
+  c.style.width="min(92vw,384px)";
+  c.style.height="auto";
+
+  const x=c.getContext("2d");
+  x.fillStyle="#fff";
+  x.fillRect(0,0,W,H);
+  x.fillStyle="#111";
+  x.textAlign="center";
+
+  x.font="900 18px Arial";
+  x.fillText("KOTA KOPI",W/2,23);
+  x.font="900 12px Arial";
+  x.fillText("KOTA SNAP",W/2,42);
+  x.font="8px Arial";
+  x.fillText("COFFEE • PEOPLE • STORIES",W/2,56);
+
+  // Full-width photograph at its natural aspect ratio.
+  x.drawImage(photo,0,headerH,W,photoH);
+
+  const now=new Date();
+  const d=now.toLocaleDateString("ms-MY",{day:"2-digit",month:"2-digit",year:"numeric"});
+  const t=now.toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit"});
+  x.fillStyle="#111";
+  x.font="8px Arial";
+  x.fillText(d+" • "+t,W/2,headerH+photoH+13);
+  x.font="900 10px Arial";
+  x.fillText("THANK YOU! ♥",W/2,headerH+photoH+29);
+}function resetToCamera(){ $("status").textContent=""; show("camScreen"); }
+$("pinBtn").onclick=login;$("pin").onkeydown=e=>{if(e.key==="Enter")login()};$("start").onclick=snap;$("again").onclick=resetToCamera;$("print").onclick=()=>{$("status").textContent="PRINT belum disambungkan ke Zywell. Flow gambar sudah siap.";show("doneScreen")};$("done").onclick=reset;
 </script></body></html>
